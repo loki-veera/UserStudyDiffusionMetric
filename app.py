@@ -107,7 +107,7 @@ def display_images():
                     key=f"radio_{start_c}_{second_name}"
                 )
                 st.session_state.select[f"radio_button_{start_c}_{second_name}"] = selection
-                st.write(f"**Your selection:** :blue[{selection}]")
+                # st.write(f"**Your selection:** :blue[{selection}]")
                 pass
             with col2:
                 sub_col1, sub_col2 = st.columns(2)
@@ -131,6 +131,7 @@ def next_images():
             if st.button("Save", key="button_save", on_click=save_csv):
                 pass
     else:
+        # display_images()
         st.session_state.count += 1
 
 
@@ -150,8 +151,10 @@ def save_csv():
     del st.session_state.gcp
 
 
-if st.session_state.count >= 1:
+c = 0
+if st.session_state.count >= 1 and c == 0:
     display_images()
+    c += 1
 
 
 if st.session_state.hide:
