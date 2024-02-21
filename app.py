@@ -44,6 +44,9 @@ if 'gcp' not in st.session_state:
         credential_path="./.streamlit/secrets.toml"
     )
 
+if 'disp_flag' not in st.session_state:
+    st.session_state.disp_flag = True
+
 if st.session_state.count == -1:
     print("I am here")
     ddpm_images = st.session_state.gcp.get_image_names(prefix="images/DDPM/")
@@ -59,17 +62,18 @@ if st.session_state.count == -1:
     st.session_state.count = 0
 
 
-def get_images():
+@st.cache_data
+def generate_images(count_):
     # Super messy logic - Try to write in a better way
-    left_images = st.session_state.images[st.session_state.count-1]
-    np.random.seed(st.session_state.rn*st.session_state.count * 1000)
+    left_images = st.session_state.images[count_]
+    np.random.seed(st.session_state.rn*(count_+1) * 1000)
     left_img_names = np.random.choice(left_images, size=len(st.session_state.images)-1, replace=False)
     left_images = [st.session_state.gcp.open_image(name) for name in left_img_names]
     right_images = []
     for i in range(len(st.session_state.images)):
-        if i == st.session_state.count-1:
+        if i == count_:
             continue
-        np.random.seed((st.session_state.rn*st.session_state.count * i) + 10)
+        np.random.seed((st.session_state.rn*count_ * i) + 10)
         img = st.session_state.gcp.open_image(np.random.choice(st.session_state.images[i]))
         right_images.append(img)
     assert len(left_images) == len(right_images)
@@ -77,9 +81,11 @@ def get_images():
 
 
 def display_images():
-    left_images, right_images = get_images()
-    model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff"]
+    # if st.session_state.disp_flag:
+    left_images, right_images = generate_images(st.session_state.count-1)
+        # st.session_state.disp_flag = False
     count  = 0
+    model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff"]
     start_c = model_nms[st.session_state.count-1]
     del model_nms[st.session_state.count-1]
     for left_img, right_img in zip(left_images, right_images):
@@ -131,30 +137,29 @@ def next_images():
             if st.button("Save", key="button_save", on_click=save_csv):
                 pass
     else:
-        # display_images()
+        st.session_state.disp_flag = True
         st.session_state.count += 1
 
 
 def save_csv():
     # df = pd.DataFrame(st.session_state.select, columns=["Button", "Selection"])
+    time.sleep(2)
     df = pd.DataFrame(st.session_state.select.items(), columns=["Button", "Selection"])
     ctx = get_script_run_ctx()
     session_id = ctx.session_id
     file_name = f"answers_{session_id}.csv"
     df.to_csv(file_name, index=False)
     st.session_state.gcp.write_csv(file_name)
+    del st.session_state.gcp
     os.remove(file_name)
     with st.container(border=False):
         st.subheader(":green[Your evaluation is saved]. Please close the tab.")
         st.image(Image.open("./images/Thanks.png").convert("RGB"))
-    time.sleep(3)
-    del st.session_state.gcp
+    time.sleep(0.5)
 
 
-c = 0
-if st.session_state.count >= 1 and c == 0:
+if st.session_state.count >= 1:
     display_images()
-    c += 1
 
 
 if st.session_state.hide:
