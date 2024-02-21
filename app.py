@@ -1,3 +1,5 @@
+import os
+import toml
 import glob
 import streamlit as st
 import numpy as np
@@ -7,6 +9,15 @@ from PIL import Image
 import time
 from copy import deepcopy
 from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
+from google.cloud import storage
+from google.oauth2 import service_account
+
+BUCKET_NAME="diff-test-bucket"
+CREDENTIAL_PATH="./.streamlit/secrets.toml"
+if os.path.exists(CREDENTIAL_PATH):
+    with open(CREDENTIAL_PATH, "r") as file:
+        credential_data = toml.load(file)
+CREDENTIALS = service_account.Credentials.from_service_account_info(credential_data["google_cloud"])
 
 
 if 'hide' not in st.session_state:
@@ -112,6 +123,7 @@ def display_images():
                 pass
             count += 1
 
+
 def next_images():
     if st.session_state.count + 1 >= len(images)+1:
         st.session_state.count = 0
@@ -129,9 +141,19 @@ def save_csv():
     df = pd.DataFrame(st.session_state.select, columns=["Button", "Selection"])
     ctx = get_script_run_ctx()
     session_id = ctx.session_id
-    df.to_csv(f"answers_{session_id}.csv")
+    file_name = f"answers_{session_id}.csv"
+    df.to_csv(file_name)
+    write_to_cloud(file_name)
+    os.remove(file_name)
     st.subheader(":green[Your evaluation is saved]. Please close the tab.")
     time.sleep(5)
+
+
+def write_to_cloud(file_name):
+    storage_client = storage.Client(credentials=CREDENTIALS)
+    bucket = storage_client.get_bucket(BUCKET_NAME)
+    blob = bucket.blob(f"user_responses/{file_name}")
+    blob.upload_from_filename(file_name)
 
 
 if st.session_state.count >= 1:

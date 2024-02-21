@@ -1,0 +1,3 @@
+# requirements.txt
+gcsfs==2024.2.0
+st-files-connection
