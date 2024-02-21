@@ -16,9 +16,12 @@ class GCP_Connection():
             bucket_name (str): Bucket name
             credential_path (str): Path to google credentials
         """
+        credential_data = None
         if os.path.exists(credential_path):
             with open(credential_path, "r") as file:
                 credential_data = toml.load(file)
+        if credential_data is None:
+            raise RuntimeError("Error connecting to GCP.")
         credentials = service_account.Credentials.from_service_account_info(credential_data["google_cloud"])
         self.storage_client = storage.Client(credentials=credentials)
         self.bucket = self.storage_client.get_bucket(bucket_name)
