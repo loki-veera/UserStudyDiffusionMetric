@@ -1,6 +1,5 @@
 import os
 import toml
-import matplotlib.pyplot as plt
 
 from typing import List
 from google.cloud import storage
