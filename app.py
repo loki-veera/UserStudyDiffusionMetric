@@ -45,7 +45,7 @@ if 'rn' not in st.session_state:
     st.session_state["rn"] = np.random.randint(0, 5)
 
 if 'select' not in st.session_state:
-    st.session_state.select = []
+    st.session_state.select = {}
 
 
 ddpm_images = sorted(glob.glob("./images/DDPM/*.jpg"))
@@ -109,7 +109,7 @@ def display_images():
                     index=0,
                     key=f"radio_{start_c}_{second_name}"
                 )
-                st.session_state.select.append((f"radio_button_{start_c}_{second_name}", selection))
+                st.session_state.select[f"radio_button_{start_c}_{second_name}"] = selection
                 st.write(f"**Your selection:** :blue[{selection}]")
                 pass
             with col2:
@@ -138,11 +138,12 @@ def next_images():
 
 
 def save_csv():
-    df = pd.DataFrame(st.session_state.select, columns=["Button", "Selection"])
+    # df = pd.DataFrame(st.session_state.select, columns=["Button", "Selection"])
+    df = pd.DataFrame(st.session_state.select.items(), columns=["Button", "Selection"])
     ctx = get_script_run_ctx()
     session_id = ctx.session_id
     file_name = f"answers_{session_id}.csv"
-    df.to_csv(file_name)
+    df.to_csv(file_name, index=False)
     write_to_cloud(file_name)
     os.remove(file_name)
     st.subheader(":green[Your evaluation is saved]. Please close the tab.")
