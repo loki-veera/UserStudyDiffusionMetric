@@ -30,7 +30,7 @@ if st.session_state.hide:
 
 
 if 'count' not in st.session_state:
-    st.session_state.count = 0
+    st.session_state.count = -1
 
 if 'rn' not in st.session_state:
     st.session_state["rn"] = np.random.randint(0, 5)
@@ -44,31 +44,33 @@ if 'gcp' not in st.session_state:
         credential_path="./.streamlit/secrets.toml"
     )
 
-
-ddpm_images = st.session_state.gcp.get_image_names(prefix="images/DDPM/")
-ddim_images = st.session_state.gcp.get_image_names(prefix="images/DDIM/")
-ddgan_images = st.session_state.gcp.get_image_names(prefix="images/DDGAN/")
-wave_images = st.session_state.gcp.get_image_names(prefix="images/WaveDiff/")
-
-
-images = [ddpm_images, ddim_images, ddgan_images, wave_images]
-if (len(ddpm_images) == 0) or (len(ddim_images) == 0) or (len(ddgan_images) == 0) or (len(wave_images) == 0):
-    raise RuntimeError("No images found. There might be issue with GCP connection.")
-assert len(ddpm_images) == len(ddim_images) == len(ddgan_images) == len(wave_images)
+if st.session_state.count == -1:
+    print("I am here")
+    ddpm_images = st.session_state.gcp.get_image_names(prefix="images/DDPM/")
+    ddim_images = st.session_state.gcp.get_image_names(prefix="images/DDIM/")
+    ddgan_images = st.session_state.gcp.get_image_names(prefix="images/DDGAN/")
+    wave_images = st.session_state.gcp.get_image_names(prefix="images/WaveDiff/")
+    images = [ddpm_images, ddim_images, ddgan_images, wave_images]
+    if "images" not in st.session_state:
+        st.session_state.images = images
+    if (len(ddpm_images) == 0) or (len(ddim_images) == 0) or (len(ddgan_images) == 0) or (len(wave_images) == 0):
+        raise RuntimeError("No images found. There might be issue with GCP connection.")
+    assert len(ddpm_images) == len(ddim_images) == len(ddgan_images) == len(wave_images)
+    st.session_state.count = 0
 
 
 def get_images():
     # Super messy logic - Try to write in a better way
-    left_images = images[st.session_state.count-1]
+    left_images = st.session_state.images[st.session_state.count-1]
     np.random.seed(st.session_state.rn*st.session_state.count * 1000)
-    left_img_names = np.random.choice(left_images, size=len(images)-1, replace=False)
+    left_img_names = np.random.choice(left_images, size=len(st.session_state.images)-1, replace=False)
     left_images = [st.session_state.gcp.open_image(name) for name in left_img_names]
     right_images = []
-    for i in range(len(images)):
+    for i in range(len(st.session_state.images)):
         if i == st.session_state.count-1:
             continue
         np.random.seed((st.session_state.rn*st.session_state.count * i) + 10)
-        img = st.session_state.gcp.open_image(np.random.choice(images[i]))
+        img = st.session_state.gcp.open_image(np.random.choice(st.session_state.images[i]))
         right_images.append(img)
     assert len(left_images) == len(right_images)
     return left_images, right_images
@@ -120,7 +122,7 @@ def display_images():
 
 
 def next_images():
-    if st.session_state.count + 1 >= len(images)+1:
+    if st.session_state.count + 1 >= len(st.session_state.images)+1:
         st.session_state.count = 0
         with st.container(border=True):
             show_hide()
