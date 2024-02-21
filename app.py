@@ -78,11 +78,23 @@ def display_images():
         with st.container(border=True):
             col1, col2 = st.columns(2)
             second_name = model_nms[count]
-            count += 1
             with col1:
+                # Hack to get away preselected radio option.
+                # Create a dummy option at top and hide it.
+                st.markdown(
+                    """
+                <style>
+                    div[role=radiogroup] label:first-of-type {
+                        visibility: hidden;
+                        height: 0px;
+                    }
+                </style>
+                """,
+                    unsafe_allow_html=True,
+                )
                 selection = st.radio(
-                    label=f"Question {start_c}:{second_name}",
-                    options=["A", "B"],
+                    label=f"**Question:**",
+                    options=["None", "A", "B"],
                     index=0,
                     key=f"radio_{start_c}_{second_name}"
                 )
@@ -98,7 +110,7 @@ def display_images():
                     st.image(right_img, caption="B")
                     pass
                 pass
-
+            count += 1
 
 def next_images():
     if st.session_state.count + 1 >= len(images)+1:
@@ -118,7 +130,7 @@ def save_csv():
     ctx = get_script_run_ctx()
     session_id = ctx.session_id
     df.to_csv(f"answers_{session_id}.csv")
-    st.subheader(":green[Your evaluation is saved]. Now close the tab.")
+    st.subheader(":green[Your evaluation is saved]. Please close the tab.")
     time.sleep(5)
 
 
