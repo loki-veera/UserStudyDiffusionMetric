@@ -27,11 +27,6 @@ class GCP_Connection():
         self.bucket = self.storage_client.get_bucket(bucket_name)
     
 
-    def __del__(self) -> None:
-        """Close the GCP connection."""
-        self.storage_client.close()
-    
-
     def write_csv(self, file_name: str) -> None:
         """Write CSV file to GCP platform.
 
