@@ -206,6 +206,7 @@ def next_images():
         show_hide()
         st.session_state.disabled=True
         save_csv()
+        st.runtime.legacy_caching.clear_cache()
         # with st.container(border=True):
         #     show_hide()
         #     st.subheader(":red[Please click on save button to save your evaluation].")
