@@ -18,17 +18,6 @@ def show_hide():
     st.session_state.hide = not st.session_state.hide
 
 
-if st.session_state.hide:
-    with st.container(border=True):
-        st.title("User Study - Diffusion Metric")
-
-        # st.subheader("Task: Find the realistic image")
-        st.subheader(""" 
-            Instruction:
-            Given image pairs, :red[***select the image that looks realistic***].
-        """)
-
-
 if 'count' not in st.session_state:
     st.session_state.count = -1
 
@@ -49,18 +38,36 @@ if 'rn' not in st.session_state:
 if 'disp_flag' not in st.session_state:
     st.session_state.disp_flag = True
 
+
+if st.session_state.hide:
+    with st.container(border=True):
+        st.title("User Study - Diffusion Metric")
+        # st.divider()
+        # st.subheader("Task: Find the realistic image")
+        st.subheader(""" 
+            Instruction:
+            Given image pairs, :red[***select the image that looks realistic***].
+        """)
+        st.divider()
+        if st.session_state.count == -1:
+            st.subheader("**Page**:1/7")
+        else:
+            st.subheader(f"**Page**:{st.session_state.count+1}/7")
+
 if st.session_state.count == -1:
     print("I am here")
     ddpm_images = st.session_state.gcp.get_image_names(prefix="images/DDPM/")
     ddim_images = st.session_state.gcp.get_image_names(prefix="images/DDIM/")
     ddgan_images = st.session_state.gcp.get_image_names(prefix="images/DDGAN/")
     wave_images = st.session_state.gcp.get_image_names(prefix="images/WaveDiff/")
-    images = [ddpm_images, ddim_images, ddgan_images, wave_images]
+    stylegan_images = st.session_state.gcp.get_image_names(prefix="images/StyleGAN2/")
+    styleswin_images = st.session_state.gcp.get_image_names(prefix="images/StyleSwin/")
+    images = [ddpm_images, ddim_images, ddgan_images, wave_images, stylegan_images, styleswin_images]
     if "images" not in st.session_state:
         st.session_state.images = images
-    if (len(ddpm_images) == 0) or (len(ddim_images) == 0) or (len(ddgan_images) == 0) or (len(wave_images) == 0):
+    if (len(ddpm_images) == 0) or (len(ddim_images) == 0) or (len(ddgan_images) == 0) or (len(wave_images) == 0) or (len(stylegan_images) == 0) or (len(styleswin_images) == 0):
         raise RuntimeError("No images found. There might be issue with GCP connection.")
-    assert len(ddpm_images) == len(ddim_images) == len(ddgan_images) == len(wave_images)
+    assert len(ddpm_images) == len(ddim_images) == len(ddgan_images) == len(wave_images) == len(styleswin_images) == len(stylegan_images)
     st.session_state.count = 0
 
 
@@ -76,10 +83,8 @@ def generate_images(count_):
         if i == count_:
             continue
         np.random.seed(st.session_state.rn + (2 ** (i + count_)))
-        print(st.session_state.rn + (2 ** (i + count_)))
         img = st.session_state.gcp.open_image(np.random.choice(st.session_state.images[i], size=100, replace=False)[-50])
         right_images.append(img)
-    print("################################################")
     assert len(left_images) == len(right_images)
     return left_images, right_images
 
@@ -89,7 +94,7 @@ def display_images():
     left_images, right_images = generate_images(st.session_state.count-1)
         # st.session_state.disp_flag = False
     count  = 0
-    model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff"]
+    model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff", "StyleGAN2", "StyleSwin"]
     start_c = model_nms[st.session_state.count-1]
     del model_nms[st.session_state.count-1]
     for left_img, right_img in zip(left_images, right_images):
@@ -111,7 +116,7 @@ def display_images():
                     unsafe_allow_html=True,
                 )
                 selection = st.radio(
-                    label=f"**Question:**",
+                    label=f"**Question**: Which of the following image looks realistic?",
                     options=["None", "A", "B"],
                     index=0,
                     key=f"radio_{start_c}_{second_name}"
@@ -134,12 +139,15 @@ def display_images():
 def next_images():
     if st.session_state.count + 1 >= len(st.session_state.images)+1:
         st.session_state.count = 0
-        with st.container(border=True):
-            show_hide()
-            st.subheader(":red[Please click on save button to save your evaluation].")
-            st.session_state.disabled=True
-            if st.button("Save", key="button_save", on_click=save_csv):
-                pass
+        show_hide()
+        st.session_state.disabled=True
+        save_csv()
+        # with st.container(border=True):
+        #     show_hide()
+        #     st.subheader(":red[Please click on save button to save your evaluation].")
+        #     st.session_state.disabled=True
+        #     if st.button("Save", key="button_save", on_click=save_csv):
+        #         pass
     else:
         st.session_state.disp_flag = True
         st.session_state.count += 1
