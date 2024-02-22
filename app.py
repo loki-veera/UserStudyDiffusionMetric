@@ -73,10 +73,10 @@ if st.session_state.count == -1:
 
 
 @st.cache_data
-def generate_images(count_):
+def generate_images(gseed, count_):
     # Super messy logic - Try to write in a better way
     left_images = st.session_state.images[count_]
-    np.random.seed(st.session_state.rn*(count_+1) * 1000)
+    np.random.seed(gseed*(count_+1) * 1000)
     left_img_names = np.random.choice(left_images, size=len(st.session_state.images)-1, replace=False)
     left_images = [st.session_state.gcp.open_image(name) for name in left_img_names]
     right_images = []
@@ -92,7 +92,7 @@ def generate_images(count_):
 
 def display_images():
     # if st.session_state.disp_flag:
-    left_images, right_images = generate_images(st.session_state.count-1)
+    left_images, right_images = generate_images(st.session_state.rn, st.session_state.count-1)
         # st.session_state.disp_flag = False
     count  = 0
 
@@ -139,8 +139,8 @@ def display_images():
             count += 1
 
 @st.cache_data
-def generate_real_fake(index):
-    np.random.seed(st.session_state.rn + (2 ** (index)))
+def generate_real_fake(gseed, index):
+    np.random.seed(gseed + (2 ** (index)))
     left_images = np.random.choice(st.session_state.original_images, size=len(st.session_state.images), replace=False)
     left_images = [st.session_state.gcp.open_image(name) for name in left_images]
     right_images = st.session_state.images[index]
@@ -153,7 +153,7 @@ def generate_real_fake(index):
 def display_real_fake():
     model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff", "StyleGAN2", "StyleSwin"]
     index = st.session_state.count%7
-    real_images, fake_images = generate_real_fake(index)
+    real_images, fake_images = generate_real_fake(st.session_state.rn, index)
     second_name = model_nms[index]
     count  = 0
     for index, (left, right) in enumerate(zip(real_images, fake_images)):
