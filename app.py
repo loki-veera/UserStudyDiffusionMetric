@@ -229,7 +229,6 @@ def save_csv():
     file_name = f"answers_{session_id}.csv"
     df.to_csv(file_name, index=False)
     st.session_state.gcp.write_csv(file_name)
-    del st.session_state.gcp
     os.remove(file_name)
     with st.container(border=False):
         st.subheader(":green[Your evaluation is saved]. Please close the tab.")
