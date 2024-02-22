@@ -32,7 +32,7 @@ if 'gcp' not in st.session_state:
 
 if 'rn' not in st.session_state:
     num_files = st.session_state.gcp.get_num_files(prefix="user_responses/")
-    print(f"Number of files: {num_files}, Seed: {num_files%10}")
+    st.write(f"Number of files: {num_files}, Seed: {num_files%10}")
     st.session_state["rn"] = num_files%10
 
 if 'disp_flag' not in st.session_state:
