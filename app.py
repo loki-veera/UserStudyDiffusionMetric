@@ -96,7 +96,7 @@ def display_images():
         # st.session_state.disp_flag = False
     count  = 0
 
-    st.write(st.session_state.count)
+    # st.write(st.session_state.count)
     model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff", "StyleGAN2", "StyleSwin"]
     start_c = model_nms[st.session_state.count-1]
     del model_nms[st.session_state.count-1]

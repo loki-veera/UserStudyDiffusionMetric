@@ -79,4 +79,5 @@ class GCP_Connection():
         Returns:
             int: Number of files
         """
-        return sum(1 for _ in self.bucket.list_blobs(prefix=prefix))
+        # Remove one becuase its directory itself
+        return sum(1 for _ in self.bucket.list_blobs(prefix=prefix))-1
