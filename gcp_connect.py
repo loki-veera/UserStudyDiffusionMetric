@@ -68,3 +68,15 @@ class GCP_Connection():
         blob_content = blob.download_as_bytes()
         img = Image.open(BytesIO(blob_content))
         return img
+
+
+    def get_num_files(self, prefix: str) -> int:
+        """Given directory return number of files.
+
+        Args:
+            prefix (str): Directory
+
+        Returns:
+            int: Number of files
+        """
+        return sum(1 for _ in self.bucket.list_blobs(prefix=prefix))

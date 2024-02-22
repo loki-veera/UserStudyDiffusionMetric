@@ -32,9 +32,6 @@ if st.session_state.hide:
 if 'count' not in st.session_state:
     st.session_state.count = -1
 
-if 'rn' not in st.session_state:
-    st.session_state["rn"] = np.random.randint(0, 5)
-
 if 'select' not in st.session_state:
     st.session_state.select = {}
 
@@ -43,6 +40,11 @@ if 'gcp' not in st.session_state:
         bucket_name="diff-test-bucket",
         credential_path="./.streamlit/secrets.toml"
     )
+
+if 'rn' not in st.session_state:
+    num_files = st.session_state.gcp.get_num_files(prefix="user_responses/")
+    print(f"Number of files: {num_files}, Seed: {num_files%10}")
+    st.session_state["rn"] = num_files%10
 
 if 'disp_flag' not in st.session_state:
     st.session_state.disp_flag = True
@@ -73,9 +75,11 @@ def generate_images(count_):
     for i in range(len(st.session_state.images)):
         if i == count_:
             continue
-        np.random.seed((st.session_state.rn*count_ * i) + 10)
-        img = st.session_state.gcp.open_image(np.random.choice(st.session_state.images[i]))
+        np.random.seed(st.session_state.rn + (2 ** (i + count_)))
+        print(st.session_state.rn + (2 ** (i + count_)))
+        img = st.session_state.gcp.open_image(np.random.choice(st.session_state.images[i], size=100, replace=False)[-50])
         right_images.append(img)
+    print("################################################")
     assert len(left_images) == len(right_images)
     return left_images, right_images
 
