@@ -207,6 +207,8 @@ def next_images():
         st.session_state.disabled=True
         save_csv()
         st.runtime.legacy_caching.clear_cache()
+        num_files = st.session_state.gcp.get_num_files(prefix="user_responses/")
+        st.session_state["rn"] = num_files%10
         # with st.container(border=True):
         #     show_hide()
         #     st.subheader(":red[Please click on save button to save your evaluation].")
