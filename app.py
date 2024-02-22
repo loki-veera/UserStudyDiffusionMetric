@@ -153,10 +153,16 @@ def generate_real_fake(index):
 def display_real_fake():
     model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff", "StyleGAN2", "StyleSwin"]
     index = st.session_state.count%7
-    left_images, right_images = generate_real_fake(index)
+    real_images, fake_images = generate_real_fake(index)
     second_name = model_nms[index]
     count  = 0
-    for left_img, right_img in zip(left_images, right_images):
+    for index, (left, right) in enumerate(zip(real_images, fake_images)):
+        np.random.seed(index**2)
+        left_img, right_img = left, right
+        save_name = f"radio_button_original_{second_name}_{count}"
+        if np.random.uniform(0, 10) > 5:
+            left_img, right_img = right, left
+            save_name = f"radio_button_{second_name}_original_{count}"
         with st.container(border=True):
             col1, col2 = st.columns(2)
             with col1:
@@ -179,7 +185,7 @@ def display_real_fake():
                     index=0,
                     key=f"radio_original_{second_name}_{count}"
                 )
-                st.session_state.select[f"radio_button_original_{second_name}_{count}"] = selection
+                st.session_state.select[save_name] = selection
                 # st.write(f"**Your selection:** :blue[{selection}]")
                 pass
             with col2:
