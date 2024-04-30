@@ -33,7 +33,7 @@ class GCP_Connection():
         Args:
             file_name (str): File name
         """
-        blob = self.bucket.blob(f"user_responses/{file_name}")
+        blob = self.bucket.blob(f"user_responses_pjfgan/{file_name}")
         blob.upload_from_filename(file_name)
 
 
