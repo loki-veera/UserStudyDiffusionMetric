@@ -46,7 +46,7 @@ if st.session_state.hide:
         # st.subheader("Task: Find the realistic image")
         st.subheader(""" 
             Instruction:
-            Given image pairs, :red[***select the image that looks realistic***].
+            Given :blue[***10***] image pairs, :red[***select the image that looks realistic***].
         """)
         st.divider()
         # if st.session_state.count == -1:
@@ -192,7 +192,7 @@ def display_real_fake():
                     unsafe_allow_html=True,
                 )
                 selection = st.radio(
-                    label=f"**Question**: Which of the following image looks realistic?",
+                    label=f":violet[**Q-{index+1}**]: Which of the following image looks realistic?",
                     options=["None", "A", "B"],
                     index=0,
                     key=f"radio_original_{second_name}_{count}"
