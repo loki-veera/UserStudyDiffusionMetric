@@ -33,7 +33,7 @@ if 'gcp' not in st.session_state:
     )
 
 if 'rn' not in st.session_state:
-    num_files = st.session_state.gcp.get_num_files(prefix="user_responses/")
+    num_files = st.session_state.gcp.get_num_files(prefix="user_responses_agri/")
     st.write(f"Number of files: {num_files}, Seed: {num_files%10}")
     st.session_state["rn"] = num_files%10
 
