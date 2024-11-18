@@ -48,13 +48,13 @@ if st.session_state.hide:
         # st.subheader("Task: Find the realistic image")
         st.subheader(""" 
             Instruction:
-            Given image pairs, :red[***select the image that looks realistic***].
+            Given image pairs, :red[***select the image that looks more realistic***].
         """)
         st.divider()
         if st.session_state.count == -1:
-            st.subheader("**Page**:1/5")
+            st.subheader("**Page**:1/9")
         else:
-            st.subheader(f"**Page**:{st.session_state.count+1}/5")
+            st.subheader(f"**Page**:{st.session_state.count+1}/9")
 
 if st.session_state.count == -1:
     # ddgan_images = st.session_state.gcp.get_image_names(prefix="agri/DDGAN/")
@@ -66,11 +66,23 @@ if st.session_state.count == -1:
     ddpm_images = st.session_state.gcp.get_image_names(prefix="church_user_study/DDPM/")
     styleswin_images = st.session_state.gcp.get_image_names(prefix="church_user_study/StyleSwin/")
     stylegan_images = st.session_state.gcp.get_image_names(prefix="church_user_study/StyleGAN2/")
+
+    original_imagenet = st.session_state.gcp.get_image_names(prefix="imagenet_user_study/Original/")
+    biggan_imagenet = st.session_state.gcp.get_image_names(prefix="imagenet_user_study/BIGGAN/")
+    edm_imagenet = st.session_state.gcp.get_image_names(prefix="imagenet_user_study/EDM/")
+    hybrid_imagenet = st.session_state.gcp.get_image_names(prefix="imagenet_user_study/ID_HYD/")
+    vlb_imagenet = st.session_state.gcp.get_image_names(prefix="imagenet_user_study/ID_VLB/")
     images = [ddim_images, ddpm_images, styleswin_images, stylegan_images]
+    imagenet_images = [biggan_imagenet, edm_imagenet, hybrid_imagenet, vlb_imagenet]
+    if "imagenet_images" not in st.session_state:
+        st.session_state.imagenet_images = imagenet_images
+        st.session_state.original_imagenet = original_imagenet
     if "images" not in st.session_state:
         st.session_state.images = images
         st.session_state.original_images = original_images
     if (len(ddim_images) == 0) or (len(ddpm_images) == 0) or (len(styleswin_images) == 0) or (len(stylegan_images) == 0):
+        raise RuntimeError("No images found. There might be issue with GCP connection.")
+    if (len(biggan_imagenet) == 0) or (len(edm_imagenet) == 0) or (len(hybrid_imagenet) == 0) or (len(vlb_imagenet) == 0):
         raise RuntimeError("No images found. There might be issue with GCP connection.")
     # assert len(ddpm_images) == len(ddim_images) == len(ddgan_images) == len(wave_images) == len(styleswin_images) == len(stylegan_images)
     st.session_state.count = 0
@@ -125,7 +137,7 @@ def display_images():
                     unsafe_allow_html=True,
                 )
                 selection = st.radio(
-                    label=f"**Question**: Which of the following image looks realistic?",
+                    label=f"**Question**: Which of the following image looks :red[***more realistic***]?",
                     options=["None", "A", "B"],
                     index=0,
                     key=f"radio_{start_c}_{second_name}"
@@ -188,7 +200,7 @@ def display_real_fake():
                     unsafe_allow_html=True,
                 )
                 selection = st.radio(
-                    label=f"**Question**: Which of the following image looks realistic?",
+                    label=f"**Question**: Which of the following image looks :red[***more realistic***]",
                     options=["None", "A", "B"],
                     index=0,
                     key=f"radio_original_{second_name}_{count}"
@@ -209,8 +221,71 @@ def display_real_fake():
             count += 1
 
 
+@st.cache_data
+def generate_real_fake_inet(gseed, index):
+    np.random.seed(gseed + (2 ** (index)))
+    left_images = np.random.choice(st.session_state.original_imagenet, size=len(st.session_state.imagenet_images), replace=False)
+    left_images = [st.session_state.gcp.open_image(name) for name in left_images]
+    right_images = st.session_state.imagenet_images[index]
+    right_images = np.random.choice(right_images, size=len(st.session_state.imagenet_images), replace=False)
+    right_images = [st.session_state.gcp.open_image(name) for name in right_images]
+    assert len(left_images) == len(right_images)
+    return left_images, right_images
+
+
+def display_imagenet_real_fake():
+    model_nms = ["BIGGAN", "EDM", "Hybrid", "VLB"]
+    index = st.session_state.count%4
+    real_images, fake_images = generate_real_fake_inet(st.session_state.rn, index)
+    second_name = model_nms[index]
+    count  = 0
+    for index, (left, right) in enumerate(zip(real_images, fake_images)):
+        np.random.seed(index**4)
+        left_img, right_img = left, right
+        save_name = f"radio_button_original_{second_name}_{count}"
+        if np.random.uniform(0, 10) > 5:
+            left_img, right_img = right, left
+            save_name = f"radio_button_{second_name}_original_{count}"
+        with st.container(border=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                # Hack to get away preselected radio option.
+                # Create a dummy option at top and hide it.
+                st.markdown(
+                    """
+                <style>
+                    div[role=radiogroup] label:first-of-type {
+                        visibility: hidden;
+                        height: 0px;
+                    }
+                </style>
+                """,
+                    unsafe_allow_html=True,
+                )
+                selection = st.radio(
+                    label=f"**Question**: Which of the following image looks more realistic?",
+                    options=["None", "A", "B"],
+                    index=0,
+                    key=f"radio_original_{second_name}_{count}"
+                )
+                st.session_state.select[save_name] = selection
+                print(save_name)
+                # st.write(f"**Your selection:** :blue[{selection}]")
+                pass
+            with col2:
+                sub_col1, sub_col2 = st.columns(2)
+                with sub_col1:
+                    st.image(left_img, caption="A")
+                    pass
+                with sub_col2:
+                    st.image(right_img, caption="B")
+                    pass
+                pass
+            count += 1
+    
+
 def next_images():
-    if st.session_state.count + 1 >= len(st.session_state.images)+1:
+    if st.session_state.count + 1 >= len(st.session_state.images) + len(st.session_state.imagenet_images)+1:
         print(st.session_state.count)
         print()
         print()
@@ -255,8 +330,11 @@ def save_csv():
 #     display_images()
 
 # if st.session_state.count > 2:
-if st.session_state.count >= 1:
+if st.session_state.count >= 1 and st.session_state.count <= 4:
     display_real_fake()
+
+if st.session_state.count > 4:
+    display_imagenet_real_fake()
 
 if st.session_state.hide:
     if st.button("Next", key="button_next", on_click=next_images, disabled=st.session_state.get("disabled", False)):
