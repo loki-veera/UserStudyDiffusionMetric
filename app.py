@@ -52,9 +52,9 @@ if st.session_state.hide:
         """)
         st.divider()
         if st.session_state.count == -1:
-            st.subheader("**Page**:1/9")
+            st.subheader("**Page**:1/5")
         else:
-            st.subheader(f"**Page**:{st.session_state.count+1}/9")
+            st.subheader(f"**Page**:{st.session_state.count+1}/5")
 
 if st.session_state.count == -1:
     # ddgan_images = st.session_state.gcp.get_image_names(prefix="agri/DDGAN/")
