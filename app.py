@@ -33,7 +33,7 @@ if 'gcp' not in st.session_state:
     )
 
 if 'rn' not in st.session_state:
-    num_files = st.session_state.gcp.get_num_files(prefix="user_responses_agri/")
+    num_files = st.session_state.gcp.get_num_files(prefix="user_responses_church/")
     st.write(f"Number of files: {num_files}, Seed: {num_files%10}")
     st.session_state["rn"] = num_files%10
 
@@ -52,19 +52,25 @@ if st.session_state.hide:
         """)
         st.divider()
         if st.session_state.count == -1:
-            st.subheader("**Page**:1/5")
+            st.subheader("**Page**:1/9")
         else:
-            st.subheader(f"**Page**:{st.session_state.count+1}/5")
+            st.subheader(f"**Page**:{st.session_state.count+1}/9")
 
 if st.session_state.count == -1:
-    ddgan_images = st.session_state.gcp.get_image_names(prefix="agri/DDGAN/")
-    original_images = st.session_state.gcp.get_image_names(prefix="agri/Original/")
-    pjfgan_images = st.session_state.gcp.get_image_names(prefix="agri/PJFGAN")
-    images = [ddgan_images, pjfgan_images]
+    # ddgan_images = st.session_state.gcp.get_image_names(prefix="agri/DDGAN/")
+    # original_images = st.session_state.gcp.get_image_names(prefix="agri/Original/")
+    # pjfgan_images = st.session_state.gcp.get_image_names(prefix="agri/PJFGAN")
+    # images = [ddgan_images, pjfgan_images]
+    original_images = st.session_state.gcp.get_image_names(prefix="church_user_study/Original/")
+    ddim_images = st.session_state.gcp.get_image_names(prefix="church_user_study/DDIM/")
+    ddpm_images = st.session_state.gcp.get_image_names(prefix="church_user_study/DDPM/")
+    styleswin_images = st.session_state.gcp.get_image_names(prefix="church_user_study/StyleSwin/")
+    stylegan_images = st.session_state.gcp.get_image_names(prefix="church_user_study/StyleGAN2/")
+    images = [ddim_images, ddpm_images, styleswin_images, stylegan_images]
     if "images" not in st.session_state:
         st.session_state.images = images
         st.session_state.original_images = original_images
-    if (len(ddgan_images) == 0) or (len(pjfgan_images) == 0):
+    if (len(ddim_images) == 0) or (len(ddpm_images) == 0) or (len(styleswin_images) == 0) or (len(stylegan_images) == 0):
         raise RuntimeError("No images found. There might be issue with GCP connection.")
     # assert len(ddpm_images) == len(ddim_images) == len(ddgan_images) == len(wave_images) == len(styleswin_images) == len(stylegan_images)
     st.session_state.count = 0
@@ -96,7 +102,8 @@ def display_images():
 
     # st.write(st.session_state.count)
     # model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff", "StyleGAN2", "StyleSwin"]
-    model_nms = ["DDGAN", "PJFGAN"]
+    # model_nms = ["DDGAN", "PJFGAN"]
+    model_nms = ["DDIM", "DDPM", "StyleSwin", "StyleGAN2"]
     start_c = model_nms[st.session_state.count-1]
     del model_nms[st.session_state.count-1]
     for left_img, right_img in zip(left_images, right_images):
@@ -151,13 +158,14 @@ def generate_real_fake(gseed, index):
 
 def display_real_fake():
     # model_nms = ["DDPM", "DDIM", "DDGAN", "WaveDiff", "StyleGAN2", "StyleSwin"]
-    model_nms = ["DDGAN", "PJFGAN", "DDGAN", "PJFGAN", "DDGAN", "PJFGAN"]
-    index = st.session_state.count%2
+    # model_nms = ["DDGAN", "PJFGAN", "DDGAN", "PJFGAN", "DDGAN", "PJFGAN"]
+    model_nms = ["DDIM", "DDPM", "StyleSwin", "StyleGAN2"]
+    index = st.session_state.count%4
     real_images, fake_images = generate_real_fake(st.session_state.rn, index)
     second_name = model_nms[index]
     count  = 0
     for index, (left, right) in enumerate(zip(real_images, fake_images)):
-        np.random.seed(index**2)
+        np.random.seed(index**4)
         left_img, right_img = left, right
         save_name = f"radio_button_original_{second_name}_{count}"
         if np.random.uniform(0, 10) > 5:
@@ -186,6 +194,7 @@ def display_real_fake():
                     key=f"radio_original_{second_name}_{count}"
                 )
                 st.session_state.select[save_name] = selection
+                print(save_name)
                 # st.write(f"**Your selection:** :blue[{selection}]")
                 pass
             with col2:
@@ -201,14 +210,17 @@ def display_real_fake():
 
 
 def next_images():
-    if st.session_state.count + 1 >= 2*len(st.session_state.images)+1:
+    if st.session_state.count + 1 >= len(st.session_state.images)+1:
+        print(st.session_state.count)
+        print()
+        print()
         st.session_state.count = 0
         show_hide()
         st.session_state.disabled=True
         save_csv()
         # st.runtime.legacy_caching.clear_cache()
         st.cache_data.clear()
-        num_files = st.session_state.gcp.get_num_files(prefix="user_responses_agri/")
+        num_files = st.session_state.gcp.get_num_files(prefix="user_responses_church/")
         st.session_state["rn"] = num_files%10
         # with st.container(border=True):
         #     show_hide()
@@ -239,10 +251,11 @@ def save_csv():
     time.sleep(0.5)
 
 
-if st.session_state.count >= 1 and st.session_state.count <= 2:
-    display_images()
+# if st.session_state.count >= 1 and st.session_state.count <= 2:
+#     display_images()
 
-if st.session_state.count > 2:
+# if st.session_state.count > 2:
+if st.session_state.count >= 1:
     display_real_fake()
 
 if st.session_state.hide:
